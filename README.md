@@ -122,7 +122,7 @@ Nature Leaves · Deep Forest · Misty Peaks · Serene Lake · Autumn Glow · Wil
 
 ### From the Chrome Web Store (Recommended)
 
-1. Visit the [ASTRA Chrome Web Store listing](https://chrome.google.com/webstore)
+1. Visit the [ASTRA Chrome Web Store listing](https://chromewebstore.google.com/detail/astra-for-facebook-%E2%80%94-unse/ikfghbghagbbieklhmclongdkljnpeak?authuser=0&hl=en)
 2. Click **"Add to Chrome"**
 3. Navigate to Facebook.com — ASTRA works instantly
 
