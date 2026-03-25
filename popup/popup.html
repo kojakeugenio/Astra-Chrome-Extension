@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="header-main">
+        <div class="brand">
+          <div class="brand-icon-wrapper">
+            <img src="../astra-logo.png" alt="ASTRA" class="brand-icon">
+          </div>
+          <div class="brand-text">
+            <h1>ASTRA</h1>
+            <p class="sub">Best FB Customization Tool</p>
+          </div>
+        </div>
+        <div class="header-stat">
+          <div class="stat-pill">
+            <span class="stat-value" id="stat-ads">0</span>
+            <span class="stat-tag">Ads Blocked</span>
+            <button id="reset-analytics" class="mini-reset-btn" title="Reset Stats">
+              <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="3" fill="none"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="not-on-facebook-msg" id="not-on-fb">
+      <div class="msg-icon">⚠️</div>
+      <div class="msg-text">
+        <h3>Facebook Not Detected</h3>
+        <p>Please navigate to Facebook.com to use Astra's features.</p>
+        <a href="https://www.facebook.com" target="_blank" class="fb-link">Go to Facebook</a>
+      </div>
+    </div>
+
+    <nav class="tabs-nav">
+      <button class="tab-btn active" data-tab="privacy">Privacy</button>
+      <button class="tab-btn" data-tab="power">Tools</button>
+      <button class="tab-btn" data-tab="theme">Theme</button>
+      <button class="tab-btn" data-tab="about">About</button>
+    </nav>
+
+    <main class="tab-container">
+      <!-- Privacy Tab -->
+      <div id="privacy" class="tab-content active">
+        <div class="section-group">
+          <section class="card">
+            <div class="card-head">
+              <h2>Messenger Privacy</h2>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Block "Seen"</span>
+                  <span class="setting-desc">Keep your read status private in chats</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="DISABLE_READ">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Block "Typing..."</span>
+                  <span class="setting-desc">Hide the typing indicator while messaging</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="DISABLE_TYPING">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Anonymous Stories</span>
+                  <span class="setting-desc">View stories without appearing in viewers list</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="DISABLE_STORIES_SEEN">
+                  <span class="slider"></span>
+                </span>
+              </label>
+            </div>
+          </section>
+          <section class="card" id="privacy-ad-blocker">
+            <div class="card-head">
+              <h2>Ad Blocker</h2>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Ads/Sponsored</span>
+                  <span class="setting-desc">Hide ads from your wall, reels, and marketplace</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_ADS" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2>Layout & Content</h2>
+            </div>
+            <p class="setting-desc" style="padding: 0 14px 10px 14px; margin: -8px 0 0 0; font-style: italic;">Note: These settings only apply to the Facebook homepage.</p>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Left Sidebar</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_LEFT_SIDEBAR" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Right Sidebar</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_RIGHT_SIDEBAR" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Navigation Bar</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_NAV_BAR" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Reels</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_REELS" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Suggestions</span>
+                  <span class="setting-desc">Remove "Suggested for you" and "People you may know"</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_SUGGESTIONS" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide "People You May Know"</span>
+                  <span class="setting-desc">Remove only the People You May Know carousel</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_PEOPLE_YOU_MAY_KNOW" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide What's on Your Mind</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_WHATS_ON_YOUR_MIND" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Hide Stories</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HIDE_STORIES" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Custom Feed Width</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="FULL_WIDTH_FEED" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="feed-width-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0 6px 0;">
+                  <span style="font-size: 12px; color: var(--text-muted);">Feed Width</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="reset-feed-width" class="icon-btn-reset" title="Reset to 100%">
+                      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    </button>
+                    <span id="feed-width-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">100%</span>
+                  </div>
+                </div>
+                <input type="range" id="feed-width-slider" min="50" max="100" value="100" step="5" style="width: 100%;">
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Power Tools Tab -->
+      <div id="power" class="tab-content">
+        <div class="section-group">
+
+          <section class="card">
+            <div class="card-head">
+              <h2>Hover Zoom</h2>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Enable Hover Zoom</span>
+                  <span class="setting-desc">Preview full-size images when hovering, scroll to zoom, drag to pan. Press Esc or scroll down to close. <strong>Tip:</strong> Hold <kbd style="background:var(--card-bg);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-size:11px;font-family:inherit;">Ctrl</kbd> to temporarily activate hover zoom even when disabled.</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="HOVER_ZOOM" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="hover-zoom-mode-container" style="margin-top: 4px; margin-bottom: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span class="field-label" style="padding: 0;">Interaction Mode</span>
+                </div>
+                <div class="segmented-control">
+                  <button class="segmented-btn active" data-mode="popup">Popup</button>
+                  <button class="segmented-btn" data-mode="inline">Inline</button>
+                </div>
+                <span class="setting-desc" id="hover-zoom-mode-desc" style="margin-top: 6px; display: block;">Opens a floating preview window when you hover over images in the feed</span>
+              </div>
+
+              <div class="field-container" id="hover-zoom-exclude-container">
+                <label class="field-label" for="hover-zoom-exclude-urls">Exclude URLs (one per line)</label>
+                <textarea id="hover-zoom-exclude-urls" 
+                          placeholder="/photo.php&#10;/photo/&#10;/messenger_media/&#10;/marketplace/item/" 
+                          rows="4"
+                          style="background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 13px; width: 100%; resize: vertical; font-family: inherit;"></textarea>
+                <span class="setting-desc" style="margin-top: 6px; display: block;">Hover zoom will be disabled when any of these patterns are detected in the page URL</span>
+              </div>
+              <label class="setting-row" id="hover-zoom-pin-row" style="display:none;">
+                <div class="setting-info">
+                  <span class="setting-name">Enable Pin Image</span>
+                  <span class="setting-desc">Show a 📌 pin button on hover zoom to keep images floating on screen</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" id="hover-zoom-pin-toggle">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="hover-zoom-pin-url-container" style="display:none;">
+                <label class="field-label" for="hover-zoom-pin-url">Pin Images by URL</label>
+                <textarea id="hover-zoom-pin-url" 
+                          placeholder="Paste image URLs here (one per line)&#10;https://example.com/photo1.jpg&#10;https://example.com/photo2.png"
+                          rows="3"
+                          style="background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 13px; width: 100%; resize: vertical; font-family: inherit;"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                  <span class="setting-desc">Paste image URLs to pin them as floating windows on Facebook</span>
+                  <button id="hover-zoom-pin-url-btn" 
+                          style="background: var(--accent); color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 150ms;">Pin All</button>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <h2>Auto Scroll</h2>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Enable Auto Scroll Controls</span>
+                  <span class="setting-desc">Automatically scroll through your feed hands-free. Will enable other controls in home feed.</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="AUTO_SCROLL" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="autoscroll-speed-container">
+                <div style="display: flex; justify-content: space-between; margin: 8px 0 6px 0;">
+                  <span style="font-size: 12px; color: var(--text-muted);">Scroll Speed</span>
+                  <span id="autoscroll-speed-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">2px</span>
+                </div>
+                <input type="range" id="autoscroll-speed-slider" min="1" max="10" value="2" step="1" style="width: 100%;">
+              </div>
+            </div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <h2>Reels Experience</h2>
+            </div>
+            <div class="setting-list">
+
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Auto-Mute Reels</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="REELS_START_MUTED" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Advanced Controls</span>
+                  <span class="setting-desc">Enable seek, restart, and speed menu</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="REELS_VIDEO_CONTROLS" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Custom Playback Speed</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="REELS_DEFAULT_SPEED" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container">
+                <label class="field-label" for="reels-speed">Default Speed</label>
+                <select id="reels-speed">
+                  <option value="0.5">0.5x</option>
+                  <option value="0.75">0.75x</option>
+                  <option value="1">1x (Normal)</option>
+                  <option value="1.25">1.25x</option>
+                  <option value="1.5">1.5x</option>
+                  <option value="1.75">1.75x</option>
+                  <option value="2">2x</option>
+                </select>
+              </div>
+
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Reels Timeout Reminder</span>
+                  <span class="setting-desc">Get reminded to take a break after watching a set number of reels</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="REELS_TIMEOUT" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="reels-timeout-container">
+                <label class="field-label" for="reels-timeout-threshold">Reels Limit</label>
+                <input type="number" id="reels-timeout-threshold" min="1" max="1000" value="100" 
+                       placeholder="e.g., 100" 
+                       style="background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 13px; width: 100%;">
+                
+                <label class="field-label" for="reels-timeout-message" style="margin-top: 12px;">Custom Message (Optional)</label>
+                <textarea id="reels-timeout-message" 
+                          placeholder="Time to rest your eyes! You've been scrolling for a while." 
+                          rows="3"
+                          style="background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 13px; width: 100%; resize: vertical; font-family: inherit;"></textarea>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Theme Tab -->
+      <div id="theme" class="tab-content">
+        <div class="section-group">
+          <!-- UI Theme Selector -->
+          <section class="card">
+            <div class="card-head">
+              <h2>Interface Theme</h2>
+            </div>
+            <div class="field-container" style="flex-direction: row; gap: 8px;">
+               <button class="theme-btn active" data-theme="system">System</button>
+               <button class="theme-btn" data-theme="light">Light</button>
+               <button class="theme-btn" data-theme="dark">Dark</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2>Visual Overlays</h2>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Activate Theme</span>
+                  <span class="setting-desc">Enable custom gradients/themes on Facebook</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="FEED_BACKGROUND" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+
+              <div id="theme-options-area">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Homepage Only</span>
+                  <span class="setting-desc">Show theme only on homepage/feed, not other pages</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="THEME_HOME_ONLY" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Subtle Zoom Effect</span>
+                  <span class="setting-desc">Add a slow, cinematic zoom to the wallpaper</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="WALLPAPER_ZOOM" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Animated Particles</span>
+                  <span class="setting-desc">Floating particles for a dynamic background</span>
+                </div>
+                <select id="particle-pattern" class="dropdown-select">
+                  <option value="none">None</option>
+                  <option value="bubbles">Floating Bubbles</option>
+                  <option value="stars">Rising Stars</option>
+                  <option value="snow">Snowfall</option>
+                  <option value="rain">Rain</option>
+                  <option value="fireflies">Fireflies</option>
+                </select>
+              </label>
+              <div class="field-container" id="particle-speed-container">
+                <div style="display: flex; justify-content: space-between; margin: 8px 0 6px 0;">
+                  <span style="font-size: 12px; color: var(--text-muted);">Particle Speed</span>
+                  <span id="particle-speed-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">1x</span>
+                </div>
+                <input type="range" id="particle-speed-slider" min="0.25" max="3" value="1" step="0.25" style="width: 100%;">
+              </div>
+              
+              <div id="theme-selection-area">
+                <div class="field-container" style="margin-bottom: 12px;">
+                  <label class="field-label" for="custom-wallpaper-url">Custom Wallpaper Image URL</label>
+                  <div style="display: flex; gap: 8px;">
+                    <input type="text" id="custom-wallpaper-url" placeholder="https://example.com/image.jpg" 
+                           style="flex: 1; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--input-text); padding: 10px; border-radius: 8px; font-size: 13px;">
+                    <button id="apply-custom-wall" class="footer-btn" style="background: var(--primary); color: #fff; white-space: nowrap;">Apply</button>
+                  </div>
+                </div>
+
+                <div class="field-container">
+                  <label class="field-label">Gradient Themes</label>
+                  <div class="preview-grid" id="gradient-grid">
+                    <!-- Populated via JS -->
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin: 12px 0 8px 0;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Gradient Intensity</span>
+                    <span id="gradient-intensity-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">100%</span>
+                  </div>
+                  <input type="range" id="gradient-intensity-slider" min="20" max="100" value="100" step="5" style="width: 100%;">
+                </div>
+
+                <div class="field-container" style="margin-top: 20px;">
+                  <label class="field-label">Nature Wallpapers</label>
+                  <div class="preview-grid" id="wallpaper-grid">
+                    <!-- Populated via JS -->
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin: 12px 0 8px 0;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Blur Intensity</span>
+                    <span id="blur-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">0px</span>
+                  </div>
+                  <input type="range" id="blur-slider" min="0" max="40" value="0" step="1" style="width: 100%;">
+                </div>
+
+                <!-- Feed Width at the very bottom of theme options -->
+                <div class="field-container" style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 12px; color: var(--text-muted);">Feed Width</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <button id="theme-reset-feed-width" class="icon-btn-reset" title="Reset to 60%">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                      </button>
+                      <span id="theme-feed-width-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">100%</span>
+                    </div>
+                  </div>
+                  <input type="range" id="theme-feed-width-slider" min="50" max="100" value="100" step="5" style="width: 100%;">
+                </div>
+              </div>
+              </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- About Tab -->
+      <div id="about" class="tab-content">
+        <div class="section-group">
+          <!-- Hero Section -->
+          <div class="about-hero">
+            <img src="../astra-logo.png" alt="ASTRA" class="about-logo">
+            <h2 class="about-title">ASTRA</h2>
+            <p class="about-tagline">The most powerful suite for Facebook.<br>Privacy, productivity, and customization in one elegant package.</p>
+          </div>
+
+          <!-- Features Grid -->
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🛡️</div>
+              <p class="feature-name">Ad Blocker</p>
+              <p class="feature-desc">Block sponsored content</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">👻</div>
+              <p class="feature-name">Unseen Mode</p>
+              <p class="feature-desc">Read without being seen</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🎨</div>
+              <p class="feature-name">Custom Themes</p>
+              <p class="feature-desc">Personalize your feed</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔍</div>
+              <p class="feature-name">Hover Zoom</p>
+              <p class="feature-desc">Preview images instantly</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⏱️</div>
+              <p class="feature-name">Reels Controls</p>
+              <p class="feature-desc">Speed, skip & timeout</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🧹</div>
+              <p class="feature-name">Clean Layout</p>
+              <p class="feature-desc">Hide distracting elements</p>
+            </div>
+          </div>
+
+          <!-- Developer Section -->
+          <div class="developer-card">
+            <div class="developer-header">
+              <div class="developer-avatar">⚡</div>
+              <div class="developer-info">
+                <h3>Built by Kojak Eugenio</h3>
+                <p>Made with passion for the Facebook community</p>
+              </div>
+            </div>
+            <div class="developer-links">
+              <a href="https://github.com/kojakeugenio" target="_blank" class="dev-link">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right: 4px;"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.041-1.416-4.041-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
+              </a>
+              <a href="https://www.facebook.com/snowden.presso/" target="_blank" class="dev-link">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right: 4px;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Facebook
+              </a>
+              <a href="https://chrome.google.com/webstore" target="_blank" class="dev-link primary">💬 Rate Us</a>
+            </div>
+          </div>
+
+          <!-- Legal Section -->
+          <div class="legal-section">
+            <h4>Disclaimer</h4>
+            <p>ASTRA is an independent project and is not affiliated with, endorsed by, or connected to Meta Platforms, Inc. or Facebook. "Facebook" is a trademark of Meta Platforms, Inc. This extension is designed to enhance your browsing experience while respecting platform guidelines.</p>
+          </div>
+
+          <!-- Made with love -->
+          <div class="made-with-love">
+            Made with <span class="heart">♥</span> for power users everywhere
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Rating Modal -->
+    <div id="rating-modal" class="rating-modal hidden">
+      <div class="rating-content">
+        <div class="rating-icon">⭐</div>
+        <div class="rating-text">
+          <h3>Enjoying Astra?</h3>
+          <p>Help us keep it free by rating 5 stars!</p>
+        </div>
+      </div>
+      <div class="rating-actions">
+        <button id="rate-later" class="rate-btn secondary">Later</button>
+        <button id="rate-now" class="rate-btn primary">Rate Now</button>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <div id="data-status" class="status-indicator">All systems operational</div>
+      <button id="set-default" class="reset-btn">Default</button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

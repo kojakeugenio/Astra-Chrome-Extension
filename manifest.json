@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "ASTRA for Facebook™ — Unseen, AdBlock & Reels",
+  "version": "1.0.0",
+  "description": "Block ads, read unseen, control Reels playback, hover zoom images, and customize Facebook with premium themes. Free & private.",
+  "permissions": [
+    "scripting",
+    "storage",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://web.facebook.com/*",
+    "https://m.facebook.com/*",
+    "https://www.messenger.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "injects/*",
+        "icons/*"
+      ],
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*",
+        "https://m.facebook.com/*",
+        "https://www.messenger.com/*"
+      ]
+    }
+  ],
+  "minimum_chrome_version": "103"
+}

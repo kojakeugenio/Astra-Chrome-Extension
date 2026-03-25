@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.crx
+*.pem
+*.zip
+
+# Large dev-only files
+audioSource_extracted*.wav
+fbsourcepage.html
+
+# Reference / prototype folders
+fb ad blocker/
+fb unseen extension/
+astra-facebook-final/
+
+# Store listing assets (not part of extension source)
+store/
+screenshots/
