@@ -38,7 +38,7 @@ ASTRA is a free, privacy-first Chrome extension that gives you **total control**
 
 ## Features
 
-### 🛡️ Privacy Protection
+### Privacy Protection
 
 | Feature | Description |
 |---|---|
@@ -46,7 +46,7 @@ ASTRA is a free, privacy-first Chrome extension that gives you **total control**
 | **Block "Typing..."** | Hide the typing indicator while composing messages |
 | **Anonymous Stories** | View stories without appearing in the viewers list |
 
-### 🚫 Ad Blocker
+### Ad Blocker
 
 - **Relay Store-Level Detection** — Intercepts ads at the React component level for reliable, flicker-free removal
 - **Feed Ads** — Hides sponsored posts from your main feed
@@ -54,7 +54,7 @@ ASTRA is a free, privacy-first Chrome extension that gives you **total control**
 - **Marketplace Ads** — Filters promotional content in Marketplace
 - **Live Counter** — Tracks how many ads have been blocked in your session
 
-### 🧹 Layout & Content Control
+### Layout & Content Control
 
 | Feature | Description |
 |---|---|
@@ -68,7 +68,7 @@ ASTRA is a free, privacy-first Chrome extension that gives you **total control**
 | Hide "People You May Know" | Remove PYMK carousels |
 | Custom Feed Width | Adjust feed width from 50% to 100% with a live slider |
 
-### 🎬 Reels Experience
+### Reels Experience
 
 | Feature | Description |
 |---|---|
@@ -78,22 +78,22 @@ ASTRA is a free, privacy-first Chrome extension that gives you **total control**
 | **Auto-Next** | Automatically advance to the next reel |
 | **Timeout Reminder** | Get a break notification after watching a configurable number of reels — great for managing screen time |
 
-### 🔍 Hover Zoom
+### Hover Zoom
 
 - **Popup Mode** — Floating preview window on hover
 - **Inline Mode** — Zoom and pan directly within the feed
 - **Scroll to Zoom** — Mouse wheel controls zoom level
 - **Drag to Pan** — Click and drag to move around the zoomed image
-- **Pin Images** — Keep images floating on screen with the 📌 button
+- **Pin Images** — Keep images floating on screen with the pin button
 - **URL Exclusions** — Disable hover zoom on specific pages
 - **Ctrl Override** — Hold `Ctrl` to temporarily activate even when disabled
 
-### 📜 Auto Scroll
+### Auto Scroll
 
 - Hands-free feed scrolling with adjustable speed (1–10px)
 - Floating controls on the homepage
 
-### 🎨 Themes & Visual Overlays
+### Themes & Visual Overlays
 
 **14 Gradient Themes:**
 Cosmic · Ocean · Sunset · Aurora · Midnight · Forest · Rose · Dark · Sky · Mint · Lavender · Lemon · Sakura · Ivory
@@ -110,7 +110,7 @@ Nature Leaves · Deep Forest · Misty Peaks · Serene Lake · Autumn Glow · Wil
 - Subtle cinematic zoom effect
 - Homepage-only mode
 
-### 🌗 Interface Theme
+### Interface Theme
 
 - System (auto-detect)
 - Light mode
@@ -159,14 +159,6 @@ cd astra-facebook-extension
 
 ---
 
-## Screenshots
-
-<p align="center">
-  <img src="screenshots/screenshot1 1280x800.png" alt="ASTRA Privacy Tab" width="600" />
-</p>
-
----
-
 ## Architecture
 
 ```
@@ -202,11 +194,11 @@ astra-facebook-extension/
 
 **ASTRA collects zero data.** Full stop.
 
-- ✅ No analytics or tracking
-- ✅ No external network requests
-- ✅ No data transmitted to any server
-- ✅ All settings stored locally via `chrome.storage.local`
-- ✅ Uninstalling removes all data
+- No analytics or tracking
+- No external network requests
+- No data transmitted to any server
+- All settings stored locally via `chrome.storage.local`
+- Uninstalling removes all data
 
 Read the full [Privacy Policy](PRIVACY_POLICY.md).
 
@@ -255,5 +247,5 @@ This project is licensed under the [MIT License](LICENSE).
 ---
 
 <p align="center">
-  Made with ❤️ by <a href="https://github.com/kojakeugenio">Kojak Eugenio</a>
+  Made with care by <a href="https://github.com/kojakeugenio">Kojak Eugenio</a>
 </p>
