@@ -165,6 +165,8 @@
     let reelAutoNextEnabled = false;
     let reelAutoNextVideoRef = null;
     let reelAutoNextIntervalId = null;
+    let reelAutoNextCooldownUntil = 0; // Timestamp: ignore auto-next triggers until this time
+    const REEL_AUTO_NEXT_COOLDOWN_MS = 2500; // 2.5s cooldown after each auto-next navigation
     let reelWatchCount = 0;
     let reelWatchCountInitialized = false;
     let reelTimeoutCount = 0; // Separate counter for timeout feature
@@ -173,7 +175,12 @@
     let lastSkippedSponsoredUrl = null;
     let sponsoredSkipInProgress = false;
     let autoScrollIntervalId = null;
+    let reelImmersiveEnabled = true;
+    let reelImmersiveIntervalId = null;
+    const REEL_IMMERSIVE_BG_ID = 'fb-toolkit-immersive-bg';
+    let reelCountdownActive = false;
     let autoScrollActive = false;
+    let autoScrollPanelHidden = false;
 
     // CSS selectors for Facebook sidebars
     // These target the main layout containers on facebook.com homepage
@@ -310,9 +317,6 @@
             }
 
             /* Core Feed Container & Stories */
-            .x11t971q, 
-            .x1hc1f62, 
-            .x1n68ee8,
             [aria-label="Stories"],
             div[role="feed"],
             div[role="feed"] > div {
@@ -320,10 +324,21 @@
                 max-width: 100% !important;
             }
 
-            /* Facebook Atomic Width Classes - Override the 896px fixed width */
-            div[role="main"] .x17zi3g0,
-            div[role="main"] .xvue9z,
-            div[role="main"] .x193iq5w {
+            /* Facebook Atomic Width Classes — Override the 680px fixed width on
+               the main feed column. Uses the compound selector that uniquely
+               identifies the structural feed container (which has all three
+               classes) without affecting action bar button wrappers (which only
+               have x193iq5w alone). */
+            div[role="main"] .x193iq5w.xvue9z.x17zi3g0 {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Stories & Composer width — these classes constrain the Stories
+               carousel and "What's on your mind" box to 680px independently
+               of the feed column triad above. */
+            div[role="main"] .xgmub6v,
+            div[role="main"] .xwya9rg {
                 width: 100% !important;
                 max-width: 100% !important;
             }
@@ -337,10 +352,10 @@
             }
 
             /* Force any specific fixed-width containers to expand */
-            div[style*="max-width: 680px"],
-            div[style*="max-width: 590px"],
-            div[style*="max-width: 500px"],
-            div[style*="max-width: 744px"] {
+            div[style*="max-width: 680px"]:not(div[role="article"] *),
+            div[style*="max-width: 590px"]:not(div[role="article"] *),
+            div[style*="max-width: 500px"]:not(div[role="article"] *),
+            div[style*="max-width: 744px"]:not(div[role="article"] *) {
                 width: 100% !important;
                 max-width: 100% !important;
             }
@@ -403,7 +418,11 @@
             }
         `,
         hideReels: `
-            /* Hide Reels section from feed - animated */
+            /* Hide entire Reels section including header bar - uses :has()
+               to target the grandparent that wraps both the "Reels" title bar
+               and the carousel content */
+            div[role="main"] div:has(> * > [aria-label="Reels"]),
+            div[role="main"] div:has(> * > [aria-label="Reels and short videos"]),
             div[role="main"] [aria-label="Reels"],
             div[role="main"] [aria-label="Reels and short videos"] {
                 max-height: 0 !important;
@@ -447,6 +466,7 @@
             }
 
             #${REEL_CONTROL_PANEL_ID} button {
+                position: relative !important;
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
@@ -476,6 +496,49 @@
                 width: 18px !important;
                 height: 18px !important;
                 fill: currentColor !important;
+            }
+
+            /* Custom tooltip popover */
+            #${REEL_CONTROL_PANEL_ID} button[data-tooltip]:hover::after,
+            #${REEL_CONTROL_PANEL_ID} select[data-tooltip]:hover::after {
+                content: attr(data-tooltip) !important;
+                position: absolute !important;
+                right: calc(100% + 10px) !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                padding: 6px 12px !important;
+                border-radius: 8px !important;
+                background: rgba(0, 0, 0, 0.9) !important;
+                backdrop-filter: blur(8px) !important;
+                color: #fff !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                font-size: 12px !important;
+                font-weight: 500 !important;
+                line-height: 1.3 !important;
+                white-space: nowrap !important;
+                pointer-events: none !important;
+                z-index: 2147483647 !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+                border: 1px solid rgba(255,255,255,0.1) !important;
+                animation: none !important;
+            }
+
+            /* Tooltip arrow */
+            #${REEL_CONTROL_PANEL_ID} button[data-tooltip]:hover::before,
+            #${REEL_CONTROL_PANEL_ID} select[data-tooltip]:hover::before {
+                content: '' !important;
+                position: absolute !important;
+                right: calc(100% + 4px) !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                border: 5px solid transparent !important;
+                border-left-color: rgba(0, 0, 0, 0.9) !important;
+                pointer-events: none !important;
+                z-index: 2147483647 !important;
+            }
+
+            #${REEL_CONTROL_PANEL_ID} select {
+                position: relative !important;
             }
 
             #${REEL_CONTROL_PANEL_ID} .reel-divider {
@@ -522,6 +585,48 @@
             #${REEL_CONTROL_PANEL_ID} button.active:hover {
                 background: #0056e0 !important;
                 box-shadow: 0 0 16px rgba(6, 102, 255, 0.6) !important;
+            }
+
+            /* Auto-next countdown inside button */
+            #${REEL_CONTROL_PANEL_ID} button .countdown-inline {
+                position: relative !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 24px !important;
+                height: 24px !important;
+            }
+
+            #${REEL_CONTROL_PANEL_ID} button .countdown-inline svg {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 24px !important;
+                height: 24px !important;
+                transform: rotate(-90deg) !important;
+            }
+
+            #${REEL_CONTROL_PANEL_ID} button .countdown-inline .cd-bg {
+                fill: none !important;
+                stroke: rgba(255,255,255,0.2) !important;
+                stroke-width: 2 !important;
+            }
+
+            #${REEL_CONTROL_PANEL_ID} button .countdown-inline .cd-ring {
+                fill: none !important;
+                stroke: #fff !important;
+                stroke-width: 2.5 !important;
+                stroke-linecap: round !important;
+                transition: stroke-dashoffset 0.25s linear !important;
+            }
+
+            #${REEL_CONTROL_PANEL_ID} button .countdown-inline .cd-num {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                color: #fff !important;
+                line-height: 1 !important;
+                z-index: 1 !important;
             }
 
             #${REEL_CONTROL_PANEL_ID} .reel-counter {
@@ -810,6 +915,82 @@
             /* Hide Marketplace Sponsored Ads */
             .fb-toolkit-hidden-marketplace-ad {
                 display: none !important;
+            }
+        `,
+        customFont: (family, size) => {
+            // Load Google Fonts via <link> tag (not @import, which fails mid-stylesheet)
+            const googleFonts = ['Inter', 'Roboto', 'Open Sans', 'Lato', 'Poppins', 'Nunito', 'Outfit', 'DM Sans', 'Plus Jakarta Sans', 'Source Sans 3', 'Dancing Script', 'Pacifico', 'Caveat', 'Satisfy', 'Great Vibes', 'Sacramento', 'Playfair Display', 'Cormorant Garamond', 'Libre Baskerville', 'Crimson Text'];
+            const fontName = family.replace(/['"]/g, '').split(',')[0].trim();
+            
+            // Remove any previous font link
+            const oldLink = document.getElementById('fb-toolkit-google-font');
+            if (oldLink) oldLink.remove();
+
+            if (googleFonts.includes(fontName)) {
+                const link = document.createElement('link');
+                link.id = 'fb-toolkit-google-font';
+                link.rel = 'stylesheet';
+                link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
+                (document.head || document.documentElement).appendChild(link);
+            }
+
+            return `
+            ${family !== 'default' ? `
+            /* Override font-family on structural and text elements */
+            body, div, span, a, p, h1, h2, h3, h4, h5, h6, input, button, select, textarea, [dir="auto"] {
+                font-family: ${family} !important;
+            }
+            /* Preserve ASTRA extension UI font */
+            [id^="fb-toolkit"] *, [id^="fb-toolkit"] {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            }
+            ` : ''}
+            
+            ${size !== 100 ? `
+            /* Scale ALL text elements across Facebook */
+            body {
+                font-size: ${size}% !important;
+            }
+            /* Override Facebook's pixel-based font sizes on text elements */
+            [dir="auto"], 
+            span[class], 
+            a[role="link"], 
+            div[role="article"] span,
+            div[role="article"] a,
+            div[role="article"] p,
+            div[role="main"] span,
+            div[role="main"] a,
+            div[role="button"] span,
+            div[role="dialog"] span,
+            div[role="dialog"] a,
+            h1, h2, h3, h4, h5, h6,
+            input, textarea, button,
+            [data-ad-preview] span {
+                font-size: inherit !important;
+            }
+            ` : ''}
+            `;
+        },
+        compactMode: `
+            /* Compact Mode - Reduce padding and margins */
+            :is(${FEED_POST_CARD_SELECTOR}) {
+                padding-top: 8px !important;
+                padding-bottom: 8px !important;
+                margin-bottom: 12px !important;
+            }
+            :is(${FEED_POST_CARD_SELECTOR}) [dir="auto"] {
+                padding-top: 2px !important;
+                padding-bottom: 2px !important;
+            }
+            /* Tighten the header row of posts */
+            :is(${FEED_POST_CARD_SELECTOR}) .x1y1aw1k {
+                margin-top: 4px !important;
+                margin-bottom: 4px !important;
+            }
+            /* Reduce padding on interaction buttons */
+            :is(${FEED_POST_CARD_SELECTOR}) div[role="button"] {
+                padding-top: 4px !important;
+                padding-bottom: 4px !important;
             }
         `,
         // Card Borders - Beautiful borders on post cards
@@ -1488,6 +1669,52 @@
             #${AUTOSCROLL_PANEL_ID} .autoscroll-close-btn svg {
                 width: 10px !important;
                 height: 10px !important;
+            }
+
+            /* Re-open FAB — appears when controller is hidden */
+            #fb-toolkit-reopen-fab {
+                position: fixed !important;
+                bottom: 24px !important;
+                left: 24px !important;
+                width: 40px !important;
+                height: 40px !important;
+                border-radius: 50% !important;
+                background: rgba(24, 24, 27, 0.88) !important;
+                backdrop-filter: blur(16px) saturate(180%) !important;
+                -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255,255,255,0.04) inset !important;
+                cursor: pointer !important;
+                z-index: 2147483640 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                padding: 0 !important;
+                transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+                opacity: 0 !important;
+                transform: scale(0.5) !important;
+            }
+            #fb-toolkit-reopen-fab.visible {
+                opacity: 0.6 !important;
+                transform: scale(1) !important;
+            }
+            #fb-toolkit-reopen-fab:hover {
+                opacity: 1 !important;
+                transform: scale(1.1) !important;
+                box-shadow: 0 4px 20px rgba(6, 102, 255, 0.3), 0 0 0 1px rgba(6, 102, 255, 0.2) inset !important;
+                border-color: rgba(6, 102, 255, 0.4) !important;
+            }
+            #fb-toolkit-reopen-fab img {
+                width: 22px !important;
+                height: 22px !important;
+                border-radius: 4px !important;
+                pointer-events: none !important;
+            }
+            #fb-toolkit-reopen-fab svg {
+                width: 18px !important;
+                height: 18px !important;
+                fill: rgba(255, 255, 255, 0.85) !important;
+                pointer-events: none !important;
             }
 
             #${AUTOSCROLL_PANEL_ID} .autoscroll-divider {
@@ -2670,6 +2897,7 @@
         if (action === 'auto-next') {
             reelAutoNextEnabled = !reelAutoNextEnabled;
             updateAutoNextButtonState(button, reelAutoNextEnabled);
+            if (!reelAutoNextEnabled) hideAutoNextCountdown();
 
             // Save setting to storage via bridge
             window.postMessage({
@@ -2687,6 +2915,51 @@
             } else if (!reelAutoNextEnabled && reelAutoNextVideoRef) {
                 // Clean up listener when disabled
                 reelAutoNextVideoRef.removeEventListener('ended', handleVideoEnded);
+            }
+            return;
+        }
+
+        // Handle navigation buttons — bypass goToNextReel's cooldown so manual clicks always work
+        if (action === 'nav-next') {
+            hideAutoNextCountdown();
+            reelAutoNextCooldownUntil = Date.now() + REEL_AUTO_NEXT_COOLDOWN_MS;
+            if (reelAutoNextVideoRef) {
+                delete reelAutoNextVideoRef.dataset.fbToolkitAutoNextTriggeredFor;
+            }
+            navigateReel('next');
+            return;
+        }
+        if (action === 'nav-prev') {
+            hideAutoNextCountdown();
+            reelAutoNextCooldownUntil = Date.now() + REEL_AUTO_NEXT_COOLDOWN_MS;
+            if (reelAutoNextVideoRef) {
+                delete reelAutoNextVideoRef.dataset.fbToolkitAutoNextTriggeredFor;
+            }
+            navigateReel('prev');
+            return;
+        }
+
+        // Handle immersive toggle
+        if (action === 'immersive') {
+            reelImmersiveEnabled = !reelImmersiveEnabled;
+            button.classList.toggle('active', reelImmersiveEnabled);
+            button.dataset.tooltip = reelImmersiveEnabled ? 'Immersive: ON' : 'Immersive';
+
+            // Save setting to storage via bridge
+            window.postMessage({
+                __fbToolkit: true,
+                type: 'UPDATE_SETTING',
+                payload: {
+                    category: 'homepage',
+                    feature: 'REELS_IMMERSIVE',
+                    value: { enable: reelImmersiveEnabled }
+                }
+            }, '*');
+
+            if (reelImmersiveEnabled) {
+                startImmersiveBackground();
+            } else {
+                stopImmersiveBackground();
             }
             return;
         }
@@ -2717,14 +2990,13 @@
                 targetVideo.currentTime = Math.min(duration, nextTime);
 
                 // Failsafe: If we're at or near the end after forwarding, trigger auto-next
-                if (reelAutoNextEnabled && nextTime >= duration - 1) {
+                if (reelAutoNextEnabled && nextTime >= duration - 0.5) {
                     // Clear any existing trigger flag
                     delete targetVideo.dataset.fbToolkitAutoNextTriggeredFor;
 
-                    // Check multiple times to ensure we catch the end
-                    setTimeout(() => checkVideoEndAndNavigate(targetVideo), 100);
-                    setTimeout(() => checkVideoEndAndNavigate(targetVideo), 300);
-                    setTimeout(() => checkVideoEndAndNavigate(targetVideo), 600);
+                    // Check after a short delay to let the video state settle
+                    setTimeout(() => checkVideoEndAndNavigate(targetVideo), 200);
+                    setTimeout(() => checkVideoEndAndNavigate(targetVideo), 500);
                 }
             } else {
                 targetVideo.currentTime = nextTime;
@@ -2944,6 +3216,18 @@
         if (currentUrl !== lastTrackedReelUrl) {
             lastTrackedReelUrl = currentUrl;
 
+            // ── Auto-next navigation guard ──
+            // Whenever we detect a new reel URL (by ANY means: scroll, keyboard, click, 
+            // our buttons, etc.), set the cooldown so the auto-next system doesn't 
+            // immediately skip this new reel based on stale video state from the 
+            // previous reel.
+            if (reelAutoNextEnabled) {
+                reelAutoNextCooldownUntil = Date.now() + REEL_AUTO_NEXT_COOLDOWN_MS;
+                if (reelAutoNextVideoRef) {
+                    delete reelAutoNextVideoRef.dataset.fbToolkitAutoNextTriggeredFor;
+                }
+            }
+
             // Auto-reset timeout counter if user comes back after a break
             // Reset if more than 30 minutes (1800000ms) have passed since last view
             const now = Date.now();
@@ -3114,8 +3398,7 @@
                 }
                 return false;
             },
-            // 10. Facebook's ad disclosure info icon
-            () => !!reelContainer.querySelector('i[data-visualcompletion="css-img"][style*="background-image"]'),
+            // 10. REMOVED — was matching all profile picture icons (false positive)
         ];
 
         isSponsored = sponsoredIndicators.some(check => {
@@ -3206,7 +3489,7 @@
                 return;
             }
             checkVideoEndAndNavigate(reelAutoNextVideoRef);
-        }, 150); // Fast interval for reliable end detection
+        }, 300); // Fallback interval for background tab detection
 
         // Handle visibility change - Edge throttles timers aggressively in background
         // When tab becomes visible again, immediately check if we need to advance
@@ -3221,10 +3504,28 @@
                 }
             });
         }
+
+        // Intercept manual keyboard navigation (ArrowDown/ArrowUp) on reel pages.
+        // When the user manually presses these keys, Facebook navigates but the 
+        // auto-next system may still fire based on old video state. Setting cooldown here.
+        if (!window.__fbToolkitArrowKeyHandlerAdded) {
+            window.__fbToolkitArrowKeyHandlerAdded = true;
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && window.location.pathname.startsWith('/reel/')) {
+                    reelAutoNextCooldownUntil = Date.now() + REEL_AUTO_NEXT_COOLDOWN_MS;
+                    if (reelAutoNextVideoRef) {
+                        delete reelAutoNextVideoRef.dataset.fbToolkitAutoNextTriggeredFor;
+                    }
+                }
+            }, true);
+        }
     }
 
     function checkVideoEndAndNavigate(video) {
         if (!video || !reelAutoNextEnabled) return;
+
+        // Cooldown guard: prevent rapid re-triggering after a recent auto-next
+        if (Date.now() < reelAutoNextCooldownUntil) return;
 
         const duration = video.duration;
         const currentTime = video.currentTime;
@@ -3235,22 +3536,34 @@
             return;
         }
 
-        // Trigger when we're very close to the end
-        if (Number.isFinite(duration) && duration > 0) {
-            // Near the end (within 1 second) OR video is paused at the very end
-            const nearEnd = currentTime >= duration - 1;
-            const atVeryEnd = currentTime >= duration - 0.1;
-            const pausedAtEnd = video.paused && atVeryEnd;
+        // Minimum playback guard: the video must have played for at least 1 second
+        // This prevents skipping during reel transitions where video metadata is in flux
+        if (!Number.isFinite(duration) || duration <= 0 || currentTime < 1) {
+            return;
+        }
 
-            if (nearEnd || pausedAtEnd) {
-                video.dataset.fbToolkitAutoNextTriggeredFor = currentSrc;
-                goToNextReel();
-            }
+        // Trigger when we're very close to the end
+        // Only trigger within the last 0.3 seconds of the video
+        const nearEnd = currentTime >= duration - 0.3;
+        const pausedAtEnd = video.paused && currentTime >= duration - 0.5;
+
+        if (nearEnd || pausedAtEnd) {
+            video.dataset.fbToolkitAutoNextTriggeredFor = currentSrc;
+            goToNextReel();
         }
     }
 
     function handleVideoTimeUpdate(event) {
-        if (!reelAutoNextEnabled) return;
+        if (!reelAutoNextEnabled) {
+            hideAutoNextCountdown();
+            return;
+        }
+
+        // Cooldown guard
+        if (Date.now() < reelAutoNextCooldownUntil) {
+            hideAutoNextCountdown();
+            return;
+        }
 
         const video = event.target;
         const duration = video.duration;
@@ -3259,12 +3572,27 @@
 
         // Check if already triggered for this specific video source
         if (video.dataset.fbToolkitAutoNextTriggeredFor === currentSrc) {
+            hideAutoNextCountdown();
             return;
         }
 
-        // Trigger when we're very close to the end (0.2s) to handle looping videos
-        // For looping videos, 'ended' event doesn't fire, so we need this.
-        if (Number.isFinite(duration) && duration > 0 && currentTime >= duration - 0.25) {
+        // Minimum playback guard
+        if (!Number.isFinite(duration) || duration <= 0 || currentTime < 1) {
+            return;
+        }
+
+        const timeLeft = duration - currentTime;
+
+        // Show countdown when within 3 seconds of ending
+        if (timeLeft <= 3 && timeLeft > 0.15) {
+            showAutoNextCountdown(timeLeft);
+        } else if (timeLeft > 3) {
+            hideAutoNextCountdown();
+        }
+
+        // Trigger very close to the end (0.15s) to handle looping videos
+        if (currentTime >= duration - 0.15) {
+            hideAutoNextCountdown();
             video.dataset.fbToolkitAutoNextTriggeredFor = currentSrc;
             goToNextReel();
         }
@@ -3272,6 +3600,9 @@
 
     function handleVideoSeeked(event) {
         if (!reelAutoNextEnabled) return;
+
+        // During cooldown, ignore seek events entirely — they're likely from reel transitions
+        if (Date.now() < reelAutoNextCooldownUntil) return;
 
         const video = event.target;
         const currentSrc = video.currentSrc || video.src;
@@ -3282,12 +3613,17 @@
             delete video.dataset.fbToolkitAutoNextTriggeredFor;
         }
 
-        // Immediately check if we're at the end after seeking
-        checkVideoEndAndNavigate(video);
+        // DON'T immediately re-check here — this was causing false skips during
+        // reel transitions (seeked fires -> flag cleared -> video still at old position
+        // -> checkVideoEndAndNavigate fires -> instant skip).
+        // The interval and timeupdate handlers will pick it up naturally.
     }
 
     function handleVideoEnded(event) {
         if (!reelAutoNextEnabled) return;
+
+        // Cooldown guard
+        if (Date.now() < reelAutoNextCooldownUntil) return;
 
         const video = event?.target;
         if (video) {
@@ -3302,30 +3638,349 @@
     }
 
     function goToNextReel() {
+        // Cooldown guard: auto-next callers are throttled.
+        // Manual navigation (nav buttons) goes through navigateReel() directly.
+        if (Date.now() < reelAutoNextCooldownUntil) return;
+
+        // Set cooldown
+        reelAutoNextCooldownUntil = Date.now() + REEL_AUTO_NEXT_COOLDOWN_MS;
+
+        // Clear the trigger flag from the current video
+        if (reelAutoNextVideoRef) {
+            delete reelAutoNextVideoRef.dataset.fbToolkitAutoNextTriggeredFor;
+        }
+
         // Visual feedback for auto-next
         const autoNextBtn = document.querySelector(`#${REEL_CONTROL_PANEL_ID} button[data-fb-toolkit-action="auto-next"]`);
         if (autoNextBtn) {
             autoNextBtn.classList.remove('triggered');
-            void autoNextBtn.offsetWidth; // Force reflow
+            void autoNextBtn.offsetWidth;
             autoNextBtn.classList.add('triggered');
             setTimeout(() => autoNextBtn.classList.remove('triggered'), 1000);
         }
 
-        // Use keyboard navigation - most reliable method
-        // ArrowDown navigates to next reel in Facebook's reel viewer
-        const downArrowEvent = new KeyboardEvent('keydown', {
-            key: 'ArrowDown',
-            code: 'ArrowDown',
-            keyCode: 40,
-            which: 40,
+        navigateReel('next');
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // AUTO-NEXT COUNTDOWN
+    // ══════════════════════════════════════════════════════════════════════════
+
+    const AUTO_NEXT_ICON_HTML = `<svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>`;
+
+    function showAutoNextCountdown(timeLeft) {
+        const autoNextBtn = document.querySelector(`#${REEL_CONTROL_PANEL_ID} button[data-fb-toolkit-action="auto-next"]`);
+        if (!autoNextBtn) return;
+
+        reelCountdownActive = true;
+
+        const radius = 10;
+        const circumference = 2 * Math.PI * radius;
+        const progress = timeLeft / 3;
+        const dashOffset = circumference * (1 - progress);
+
+        let container = autoNextBtn.querySelector('.countdown-inline');
+        if (!container) {
+            // Replace the icon with countdown
+            autoNextBtn.innerHTML = `
+                <div class="countdown-inline">
+                    <svg viewBox="0 0 24 24">
+                        <circle class="cd-bg" cx="12" cy="12" r="${radius}"/>
+                        <circle class="cd-ring" cx="12" cy="12" r="${radius}"
+                            stroke-dasharray="${circumference}"
+                            stroke-dashoffset="0"/>
+                    </svg>
+                    <span class="cd-num"></span>
+                </div>
+            `;
+            container = autoNextBtn.querySelector('.countdown-inline');
+        }
+
+        const ring = container.querySelector('.cd-ring');
+        if (ring) ring.setAttribute('stroke-dashoffset', String(dashOffset));
+
+        const num = container.querySelector('.cd-num');
+        if (num) num.textContent = Math.ceil(timeLeft);
+    }
+
+    function hideAutoNextCountdown() {
+        if (!reelCountdownActive) return;
+        reelCountdownActive = false;
+
+        const autoNextBtn = document.querySelector(`#${REEL_CONTROL_PANEL_ID} button[data-fb-toolkit-action="auto-next"]`);
+        if (autoNextBtn && autoNextBtn.querySelector('.countdown-inline')) {
+            autoNextBtn.innerHTML = AUTO_NEXT_ICON_HTML;
+        }
+    }
+
+    /**
+     * Navigate to next or previous reel using multiple strategies for reliability.
+     * @param {'next'|'prev'} direction
+     */
+    function navigateReel(direction) {
+        const isNext = direction === 'next';
+        const scrollAmount = isNext ? window.innerHeight : -window.innerHeight;
+
+        // Find the scroll-snap container that wraps the reels.
+        // Walk up from the current video element to find the scrollable parent.
+        const video = reelAutoNextVideoRef || getPrimaryReelVideo();
+        if (video) {
+            let el = video.parentElement;
+            while (el && el !== document.body && el !== document.documentElement) {
+                const style = window.getComputedStyle(el);
+                const overflowY = style.overflowY;
+                const isScrollable = (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay');
+                // Check if this is the reel scroll container (scrollable + taller content)
+                if (isScrollable && el.scrollHeight > el.clientHeight + 10) {
+                    el.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                    return;
+                }
+                el = el.parentElement;
+            }
+        }
+
+        // Fallback: try common reel container selectors
+        const containers = document.querySelectorAll('[data-pagelet*="Reel"], [role="main"]');
+        for (const container of containers) {
+            const style = window.getComputedStyle(container);
+            const overflowY = style.overflowY;
+            if ((overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') 
+                && container.scrollHeight > container.clientHeight + 10) {
+                container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                return;
+            }
+        }
+
+        // Fallback: try scrolling the document/body/html
+        const docEl = document.documentElement;
+        const body = document.body;
+        if (docEl.scrollHeight > docEl.clientHeight + 10) {
+            docEl.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            return;
+        }
+        if (body.scrollHeight > body.clientHeight + 10) {
+            body.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+            return;
+        }
+
+        // Last resort: dispatch a wheel event on the video or its container
+        const target = video || document.querySelector('[data-pagelet*="Reel"]') || document.body;
+        const wheelEvent = new WheelEvent('wheel', {
+            deltaY: isNext ? 300 : -300,
+            deltaMode: 0,
             bubbles: true,
             cancelable: true,
             view: window
         });
+        target.dispatchEvent(wheelEvent);
+    }
 
-        // Just dispatch on document - bubbling from specific elements can cause double-handling
-        // if the app listens on document/window.
-        document.dispatchEvent(downArrowEvent);
+    function goToPreviousReel() {
+        // Set cooldown (prevents auto-next from firing after manual nav)
+        reelAutoNextCooldownUntil = Date.now() + REEL_AUTO_NEXT_COOLDOWN_MS;
+
+        // Clear the trigger flag
+        if (reelAutoNextVideoRef) {
+            delete reelAutoNextVideoRef.dataset.fbToolkitAutoNextTriggeredFor;
+        }
+
+        navigateReel('prev');
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // IMMERSIVE MODE — Blurred video background
+    // ══════════════════════════════════════════════════════════════════════════
+
+    function startImmersiveBackground() {
+        stopImmersiveBackground(); // Clean up any existing
+
+        // Add soft edge vignette to the video container so it blends with the background
+        applyVideoEdgeBlend(true);
+
+        // Create the fixed background container
+        const bgDiv = document.createElement('div');
+        bgDiv.id = REEL_IMMERSIVE_BG_ID;
+        bgDiv.style.cssText = `
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            pointer-events: none;
+        `;
+
+        const canvas = document.createElement('canvas');
+        canvas.style.cssText = `
+            position: absolute;
+            top: 50%; left: 50%;
+            min-width: 110%; min-height: 110%;
+            transform: translate(-50%, -50%) scale(1.2);
+            filter: blur(20px) brightness(0.6) saturate(1.4);
+            object-fit: cover;
+        `;
+
+        bgDiv.appendChild(canvas);
+
+        /**
+         * Find the best container for the immersive bg.
+         * On SPA navigation, Facebook opens reels in a dialog/overlay with its own
+         * stacking context. We must insert INSIDE that overlay so our bg is visible.
+         * On direct page load (/reel/), there's no overlay — body works fine.
+         */
+        function findReelOverlay() {
+            // Strategy 1: Look for a dialog element or role="dialog"
+            const dialogs = document.querySelectorAll('div[role="dialog"], dialog');
+            for (const dialog of dialogs) {
+                if (dialog.querySelector('video')) {
+                    return dialog;
+                }
+            }
+            // Strategy 2: Look for a high z-index fixed container that contains a video
+            const videos = document.querySelectorAll('video');
+            for (const video of videos) {
+                let el = video.parentElement;
+                while (el && el !== document.body) {
+                    const style = window.getComputedStyle(el);
+                    const zIndex = parseInt(style.zIndex, 10);
+                    if (style.position === 'fixed' && zIndex > 100) {
+                        return el;
+                    }
+                    el = el.parentElement;
+                }
+            }
+            return null;
+        }
+
+        let placed = false;
+        function placeBackground() {
+            const existing = document.getElementById(REEL_IMMERSIVE_BG_ID);
+            if (!existing) return false; // was removed
+
+            const overlay = findReelOverlay();
+            if (overlay) {
+                bgDiv.style.zIndex = '0';
+                if (existing.parentElement !== overlay) {
+                    overlay.insertBefore(bgDiv, overlay.firstChild);
+                }
+                // Elevate all other direct children of the overlay above the bg
+                Array.from(overlay.children).forEach(child => {
+                    if (child !== bgDiv && child.id !== REEL_IMMERSIVE_BG_ID) {
+                        const cs = window.getComputedStyle(child);
+                        // Only set if not already positioned with a z-index
+                        if (!child.dataset.fbToolkitImmersiveElevated) {
+                            if (cs.position === 'static') {
+                                child.style.setProperty('position', 'relative', 'important');
+                            }
+                            child.style.setProperty('z-index', '1', 'important');
+                            child.dataset.fbToolkitImmersiveElevated = 'true';
+                        }
+                    }
+                });
+                placed = true;
+                return true;
+            } else {
+                // Fallback: insert in body with z-index 0 (body children naturally stack above)
+                bgDiv.style.zIndex = '0';
+                if (!existing.parentElement || existing.parentElement === document.body) {
+                    document.body.insertBefore(bgDiv, document.body.firstChild);
+                }
+                return false;
+            }
+        }
+
+        // Initial placement
+        document.body.insertBefore(bgDiv, document.body.firstChild);
+        placeBackground();
+
+        // Draw frames at ~15fps (every 66ms)
+        const ctx = canvas.getContext('2d');
+        let lastVideoSrc = '';
+
+        reelImmersiveIntervalId = setInterval(() => {
+            if (!reelImmersiveEnabled) {
+                stopImmersiveBackground();
+                return;
+            }
+
+            // Re-attempt overlay placement if not yet found
+            if (!placed) {
+                placeBackground();
+            }
+
+            const video = reelAutoNextVideoRef || getPrimaryReelVideo();
+            if (!video) return;
+
+            // Only draw when video has enough data
+            if (video.readyState < 2) return;
+
+            // Update canvas dimensions if video source changed
+            const currentSrc = video.currentSrc || video.src || '';
+            if (currentSrc !== lastVideoSrc) {
+                lastVideoSrc = currentSrc;
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 360;
+            }
+
+            try {
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            } catch (e) {
+                // Cross-origin video — can't draw
+            }
+        }, 66);
+    }
+
+    function stopImmersiveBackground() {
+        const existing = document.getElementById(REEL_IMMERSIVE_BG_ID);
+        if (existing) existing.remove();
+        if (reelImmersiveIntervalId) {
+            clearInterval(reelImmersiveIntervalId);
+            reelImmersiveIntervalId = null;
+        }
+        // Clean up elevated overlay children
+        document.querySelectorAll('[data-fb-toolkit-immersive-elevated]').forEach(el => {
+            el.style.removeProperty('position');
+            el.style.removeProperty('z-index');
+            delete el.dataset.fbToolkitImmersiveElevated;
+        });
+        applyVideoEdgeBlend(false);
+    }
+
+    /**
+     * Add/remove a soft outer glow on the video container
+     * so its edges blend smoothly into the blurred immersive background.
+     */
+    function applyVideoEdgeBlend(enable) {
+        const video = reelAutoNextVideoRef || getPrimaryReelVideo();
+        if (!video) return;
+
+        // Find the closest sized container that wraps the video
+        let container = video.parentElement;
+        while (container && container !== document.body) {
+            const rect = container.getBoundingClientRect();
+            // Look for a container that's roughly video-sized (not full-screen)
+            if (rect.width > 100 && rect.height > 200 && rect.width < window.innerWidth * 0.95) {
+                break;
+            }
+            container = container.parentElement;
+        }
+        if (!container || container === document.body) container = video;
+
+        if (enable) {
+            // Soft outer glow that fades the video edges into the blurred background
+            container.style.setProperty('box-shadow',
+                '0 0 80px 30px rgba(0,0,0,0.7), 0 0 150px 60px rgba(0,0,0,0.4)',
+                'important');
+            // Ensure the video container stacks above the immersive bg
+            container.style.setProperty('position', 'relative', 'important');
+            container.style.setProperty('z-index', '2', 'important');
+            container.dataset.fbToolkitImmersiveEdge = 'true';
+        } else {
+            // Clean up all elements with the edge blend
+            document.querySelectorAll('[data-fb-toolkit-immersive-edge]').forEach(el => {
+                el.style.removeProperty('box-shadow');
+                el.style.removeProperty('z-index');
+                el.style.removeProperty('position');
+                delete el.dataset.fbToolkitImmersiveEdge;
+            });
+        }
     }
 
     function handleReelSpeedChange(event) {
@@ -3348,28 +4003,42 @@
 
         // SVG Icons for minimal design
         const icons = {
+            chevronUp: `<svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>`,
+            chevronDown: `<svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>`,
             restart: `<svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>`,
             rewind: `<svg viewBox="0 0 24 24"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>`,
             forward: `<svg viewBox="0 0 24 24"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>`,
-            autoNext: `<svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>`
+            autoNext: `<svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>`,
+            immersive: `<svg viewBox="0 0 24 24"><path d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5z"/></svg>`
         };
 
         panel.innerHTML = `
-            <button type="button" data-fb-toolkit-action="auto-next" title="Auto-advance to next reel when video ends">
+            <button type="button" data-fb-toolkit-action="nav-prev" data-tooltip="Previous">
+                ${icons.chevronUp}
+            </button>
+            <button type="button" data-fb-toolkit-action="nav-next" data-tooltip="Next">
+                ${icons.chevronDown}
+            </button>
+            <div class="reel-divider"></div>
+            <button type="button" data-fb-toolkit-action="auto-next" data-tooltip="Auto-Next">
                 ${icons.autoNext}
             </button>
             <div class="reel-divider"></div>
-            <button type="button" data-fb-toolkit-action="restart" title="Restart video from beginning">
+            <button type="button" data-fb-toolkit-action="immersive" data-tooltip="Immersive">
+                ${icons.immersive}
+            </button>
+            <div class="reel-divider"></div>
+            <button type="button" data-fb-toolkit-action="restart" data-tooltip="Restart">
                 ${icons.restart}
             </button>
-            <button type="button" data-fb-toolkit-action="rewind-10" title="Rewind 10 seconds">
+            <button type="button" data-fb-toolkit-action="rewind-10" data-tooltip="Rewind 10s">
                 ${icons.rewind}
             </button>
-            <button type="button" data-fb-toolkit-action="forward-10" title="Skip forward 10 seconds">
+            <button type="button" data-fb-toolkit-action="forward-10" data-tooltip="Forward 10s">
                 ${icons.forward}
             </button>
             <div class="reel-divider"></div>
-            <select data-fb-toolkit-action="speed" aria-label="Playback speed" title="Change playback speed">
+            <select data-fb-toolkit-action="speed" data-tooltip="Speed" aria-label="Playback speed">
                 <option value="0.5">0.5×</option>
                 <option value="0.75">0.75×</option>
                 <option value="1" selected>1×</option>
@@ -3493,6 +4162,7 @@
 
         if (!controlsEnabled || !isReelPage) {
             removeReelControlPanel();
+            stopImmersiveBackground();
             return;
         }
 
@@ -3508,6 +4178,10 @@
 
         if (!videos.length) {
             panel.style.display = 'none';
+            // Still start immersive — the canvas interval handles missing videos gracefully
+            if (reelImmersiveEnabled && !document.getElementById(REEL_IMMERSIVE_BG_ID)) {
+                startImmersiveBackground();
+            }
             return;
         }
 
@@ -3530,9 +4204,22 @@
             if (autoNextButton) {
                 updateAutoNextButtonState(autoNextButton, reelAutoNextEnabled);
             }
+
+            // Sync immersive button state
+            const immersiveButton = panel.querySelector('button[data-fb-toolkit-action="immersive"]');
+            if (immersiveButton) {
+                immersiveButton.classList.toggle('active', reelImmersiveEnabled);
+                immersiveButton.dataset.tooltip = reelImmersiveEnabled ? 'Immersive: ON' : 'Immersive';
+            }
+
             if (reelAutoNextEnabled) {
                 setupAutoNextListener(primaryVideo);
             }
+        }
+
+        // Start immersive if enabled (only if not already running)
+        if (reelImmersiveEnabled && !document.getElementById(REEL_IMMERSIVE_BG_ID)) {
+            startImmersiveBackground();
         }
         const displaySpeed = normalizeReelSpeed(primaryVideo?.playbackRate || preferredSpeed || 1);
         speedSelect.value = String(displaySpeed);
@@ -3547,6 +4234,11 @@
 
         // Initialize auto-next from saved settings
         reelAutoNextEnabled = Boolean(settings.REELS_AUTO_NEXT?.enable);
+
+        // Default immersive to ON for new users (only false if explicitly disabled)
+        reelImmersiveEnabled = settings.REELS_IMMERSIVE?.enable !== undefined
+            ? Boolean(settings.REELS_IMMERSIVE.enable)
+            : true;
 
         // Initialize watch count from saved settings (only once to avoid overwriting local changes)
         if (!reelWatchCountInitialized) {
@@ -4060,6 +4752,16 @@
 
         if (settings.HIDE_ADS?.enable) {
             css += HOMEPAGE_STYLES.hideAds;
+        }
+
+        if (settings.CUSTOM_FONT?.enable) {
+            const family = settings.CUSTOM_FONT?.family || 'default';
+            const size = settings.CUSTOM_FONT?.size || 100;
+            css += HOMEPAGE_STYLES.customFont(family, size);
+        }
+
+        if (settings.COMPACT_MODE?.enable) {
+            css += HOMEPAGE_STYLES.compactMode;
         }
 
         // Auto scroll controls (homepage only)
@@ -6712,6 +7414,15 @@
                 autoScrollIntervalId = null;
             }
             autoScrollActive = false;
+            autoScrollPanelHidden = false;
+            // Also remove re-open FAB if the feature was disabled from popup
+            const fab = document.getElementById('fb-toolkit-reopen-fab');
+            if (fab) fab.remove();
+            return;
+        }
+
+        // If user manually hid the panel via close button, don't recreate it
+        if (autoScrollPanelHidden && !panel) {
             return;
         }
 
@@ -7348,7 +8059,7 @@
             }, 500);
             window.addEventListener('resize', positionPanel, { passive: true });
 
-            // ── Close button — disable auto scroll & show toast ──
+            // ── Close button — hide panel & show re-open FAB ──
             const closeBtn = el.querySelector('#autoscroll-close-btn');
             closeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -7361,17 +8072,12 @@
                 clearInterval(posInterval);
                 window.removeEventListener('resize', positionPanel);
 
-                // Persist disable to extension storage via bridge
-                if (window.fb_toolkit?.homepage?.AUTO_SCROLL) {
-                    window.fb_toolkit.homepage.AUTO_SCROLL.enable = false;
-                }
-                window.postMessage({
-                    __fbToolkit: true,
-                    type: 'UPDATE_SETTING',
-                    payload: { category: 'homepage', feature: 'AUTO_SCROLL', value: { enable: false } }
-                }, '*');
+                // DON'T disable AUTO_SCROLL in storage — just hide for this view
+                // Mark as hidden so manageAutoScrollPanel won't recreate it
+                autoScrollPanelHidden = true;
 
                 applyStyles();
+                showReopenFab();
                 showAutoScrollToast();
             });
 
@@ -7748,6 +8454,41 @@ ${logoHtml}
         setTimeout(() => toast.remove(), 250);
     }
 
+    function showReopenFab() {
+        // Remove any existing FAB
+        const existing = document.getElementById('fb-toolkit-reopen-fab');
+        if (existing) existing.remove();
+
+        const fab = document.createElement('button');
+        fab.id = 'fb-toolkit-reopen-fab';
+        fab.title = 'Show Astra Controller';
+
+        // Use extension logo if available, otherwise SVG
+        const iconUrl = window.__fb_toolkit_icon_url;
+        if (iconUrl) {
+            fab.innerHTML = `<img src="${iconUrl}" alt="Astra">`;
+        } else {
+            fab.innerHTML = `<svg viewBox="0 0 24 24"><path d="M20.38 8.57l-1.23 1.85a8 8 0 0 1-.22 7.58H5.07A8 8 0 0 1 15.58 6.85l1.85-1.23A10 10 0 0 0 3.35 19a2 2 0 0 0 1.72 1h13.85a2 2 0 0 0 1.74-1 10 10 0 0 0-.28-10.43zM10.5 15a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0zm9.13-10.36L15 8.13L13.5 6.63l4.64-4.64a.5.5 0 0 1 .7.7z"/></svg>`;
+        }
+
+        fab.addEventListener('click', () => {
+            autoScrollPanelHidden = false;
+            fab.style.opacity = '0';
+            fab.style.transform = 'scale(0.5)';
+            setTimeout(() => fab.remove(), 300);
+            manageAutoScrollPanel();
+        });
+
+        document.body.appendChild(fab);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                fab.classList.add('visible');
+            });
+        });
+    }
+
     function showAutoScrollToast() {
         // Remove any existing toast
         const existing = document.getElementById('fb-toolkit-autoscroll-toast');
@@ -7793,10 +8534,10 @@ ${logoHtml}
         toast.innerHTML = `
 ${iconHtml}
 <div style="display:flex;flex-direction:column;flex:1;margin-right:8px;">
-    <span style="color:rgba(255,255,255,0.95);font-weight:600;font-size:13px;letter-spacing:0.1px;">Astra Autoscroll</span>
-    <span style="color:rgba(255,255,255,0.55);font-size:12px;">Feature disabled</span>
+    <span style="color:rgba(255,255,255,0.95);font-weight:600;font-size:13px;letter-spacing:0.1px;">Astra Controller</span>
+    <span style="color:rgba(255,255,255,0.55);font-size:12px;">Hidden — click the floating icon to reopen</span>
 </div>
-<button id="fb-toolkit-toast-undo" style="flex-shrink:0;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;cursor:pointer;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;transition:all 150ms ease;letter-spacing:0.2px;margin-right:4px;">Undo</button>
+<button id="fb-toolkit-toast-undo" style="flex-shrink:0;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:#60a5fa;cursor:pointer;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;font-family:inherit;transition:all 150ms ease;letter-spacing:0.2px;margin-right:4px;">Show</button>
 <button id="fb-toolkit-toast-dismiss" style="flex-shrink:0;background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:color 150ms ease;">
     <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor;"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg>
 </button>
@@ -7821,7 +8562,7 @@ ${iconHtml}
             setTimeout(() => toast.remove(), 400);
         }
 
-        // Undo handler — re-enable auto scroll and bring back the panel
+        // Show handler — bring back the controller immediately
         const undoBtn = toast.querySelector('#fb-toolkit-toast-undo');
         if (undoBtn) {
             undoBtn.addEventListener('mouseenter', () => {
@@ -7835,16 +8576,15 @@ ${iconHtml}
                 undoBtn.style.color = '#60a5fa';
             });
             undoBtn.addEventListener('click', () => {
-                // Re-enable in settings
-                if (window.fb_toolkit?.homepage?.AUTO_SCROLL) {
-                    window.fb_toolkit.homepage.AUTO_SCROLL.enable = true;
+                // Unhide the panel
+                autoScrollPanelHidden = false;
+                // Remove the re-open FAB
+                const fab = document.getElementById('fb-toolkit-reopen-fab');
+                if (fab) {
+                    fab.style.opacity = '0';
+                    fab.style.transform = 'scale(0.5)';
+                    setTimeout(() => fab.remove(), 300);
                 }
-                // Persist re-enable to extension storage
-                window.postMessage({
-                    __fbToolkit: true,
-                    type: 'UPDATE_SETTING',
-                    payload: { category: 'homepage', feature: 'AUTO_SCROLL', value: { enable: true } }
-                }, '*');
                 // Re-apply styles & recreate the panel
                 applyStyles();
                 manageAutoScrollPanel();

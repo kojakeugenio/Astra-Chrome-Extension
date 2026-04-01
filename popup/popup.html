@@ -15,7 +15,7 @@
       <div class="header-main">
         <div class="brand">
           <div class="brand-icon-wrapper">
-            <img src="../astra-logo.png" alt="ASTRA" class="brand-icon">
+            <img src="astra-logo.png" alt="ASTRA" class="brand-icon">
           </div>
           <div class="brand-text">
             <h1>ASTRA</h1>
@@ -109,9 +109,41 @@
             </div>
           </section>
 
+          <!-- KEYWORD FILTER — hidden for now, re-enable later
+          <section class="card" id="privacy-keyword-filter">
+            <div class="card-head">
+              <h2>Keyword Filter</h2>
+              <div class="card-head-stat" id="keyword-stat-badge" style="display: none; align-items: center; gap: 6px; background: rgba(6, 102, 255, 0.1); border: 1px solid rgba(6, 102, 255, 0.2); border-radius: 100px; padding: 3px 10px 3px 8px; font-size: 11px; font-weight: 600; color: var(--primary);">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+                <span id="stat-keywords">0</span> hidden
+              </div>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Enable Keyword Filter</span>
+                  <span class="setting-desc">Hide posts containing specific words or phrases from your feed</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="KEYWORD_FILTER" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="keyword-filter-container">
+                <label class="field-label" for="keyword-filter-terms">Blocked Keywords</label>
+                <textarea id="keyword-filter-terms" 
+                          placeholder="Enter keywords to hide (one per line or comma-separated)&#10;politics&#10;crypto, nft&#10;election&#10;spoiler" 
+                          rows="4"
+                          style="background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 13px; width: 100%; resize: vertical; font-family: inherit;"></textarea>
+                <span class="setting-desc" style="margin-top: 6px; display: block;">Posts containing any of these keywords will be hidden from your homepage feed. Matching is case-insensitive.</span>
+              </div>
+            </div>
+          </section>
+          END KEYWORD FILTER -->
+
           <section class="card">
             <div class="card-head">
-              <h2>Layout & Content</h2>
+              <h2>Layout &amp; Content</h2>
             </div>
             <p class="setting-desc" style="padding: 0 14px 10px 14px; margin: -8px 0 0 0; font-style: italic;">Note: These settings only apply to the Facebook homepage.</p>
             <div class="setting-list">
@@ -210,6 +242,86 @@
                 </div>
                 <input type="range" id="feed-width-slider" min="50" max="100" value="100" step="5" style="width: 100%;">
               </div>
+            </div>
+          </section>
+
+          <section class="card" id="font-customization-section">
+            <div class="card-head">
+              <h2>Font &amp; Typography</h2>
+            </div>
+            <div class="setting-list">
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Custom Font</span>
+                  <span class="setting-desc">Override Facebook's default font across pages</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="CUSTOM_FONT" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
+              <div class="field-container" id="font-family-container">
+                <label class="field-label" for="font-family-select">Font Family</label>
+                <select id="font-family-select" style="background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 8px; font-size: 13px; width: 100%; cursor: pointer;">
+                  <option value="default">Default (Facebook)</option>
+                  <optgroup label="System Fonts">
+                    <option value="system-ui">System UI</option>
+                    <option value="-apple-system, BlinkMacSystemFont, sans-serif">Apple (San Francisco)</option>
+                    <option value="'Segoe UI', Tahoma, sans-serif">Segoe UI (Windows)</option>
+                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                    <option value="Georgia, serif">Georgia</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                  </optgroup>
+                  <optgroup label="Google Fonts">
+                    <option value="'Inter', sans-serif">Inter</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Lato', sans-serif">Lato</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Nunito', sans-serif">Nunito</option>
+                    <option value="'Outfit', sans-serif">Outfit</option>
+                    <option value="'DM Sans', sans-serif">DM Sans</option>
+                    <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+                    <option value="'Source Sans 3', sans-serif">Source Sans 3</option>
+                  </optgroup>
+                  <optgroup label="Cursive &amp; Script">
+                    <option value="'Dancing Script', cursive">Dancing Script</option>
+                    <option value="'Pacifico', cursive">Pacifico</option>
+                    <option value="'Caveat', cursive">Caveat</option>
+                    <option value="'Satisfy', cursive">Satisfy</option>
+                    <option value="'Great Vibes', cursive">Great Vibes</option>
+                    <option value="'Sacramento', cursive">Sacramento</option>
+                  </optgroup>
+                  <optgroup label="Elegant Serif">
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="'Cormorant Garamond', serif">Cormorant Garamond</option>
+                    <option value="'Libre Baskerville', serif">Libre Baskerville</option>
+                    <option value="'Crimson Text', serif">Crimson Text</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="field-container" id="font-size-container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0 6px 0;">
+                  <span style="font-size: 12px; color: var(--text-muted);">Font Size</span>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="reset-font-size" class="icon-btn-reset" title="Reset to default">
+                      <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    </button>
+                    <span id="font-size-val" style="color: var(--primary); font-size: 12px; font-weight: 600;">100%</span>
+                  </div>
+                </div>
+                <input type="range" id="font-size-slider" min="80" max="140" value="100" step="5" style="width: 100%;">
+              </div>
+              <label class="setting-row">
+                <div class="setting-info">
+                  <span class="setting-name">Compact Mode</span>
+                  <span class="setting-desc">Reduce padding and spacing for denser content display</span>
+                </div>
+                <span class="switch">
+                  <input type="checkbox" data-feature="COMPACT_MODE" data-category="homepage">
+                  <span class="slider"></span>
+                </span>
+              </label>
             </div>
           </section>
         </div>
@@ -500,6 +612,7 @@
                 </div>
               </div>
               </div>
+            </div>
           </section>
         </div>
       </div>
@@ -509,7 +622,7 @@
         <div class="section-group">
           <!-- Hero Section -->
           <div class="about-hero">
-            <img src="../astra-logo.png" alt="ASTRA" class="about-logo">
+            <img src="astra-logo.png" alt="ASTRA" class="about-logo">
             <h2 class="about-title">ASTRA</h2>
             <p class="about-tagline">The most powerful suite for Facebook.<br>Privacy, productivity, and customization in one elegant package.</p>
           </div>
@@ -567,6 +680,28 @@
                 Facebook
               </a>
               <a href="https://chrome.google.com/webstore" target="_blank" class="dev-link primary">💬 Rate Us</a>
+            </div>
+          </div>
+
+          <!-- Settings Backup -->
+          <div class="developer-card" style="margin-top: 12px;">
+            <div class="developer-header">
+              <div class="developer-avatar">💾</div>
+              <div class="developer-info">
+                <h3>Settings Backup</h3>
+                <p>Export or import your ASTRA configuration</p>
+              </div>
+            </div>
+            <div class="developer-links">
+              <button id="export-settings" class="dev-link primary" style="cursor: pointer; border: none; font-family: inherit; font-size: inherit;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right: 4px;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                Export
+              </button>
+              <button id="import-settings" class="dev-link" style="cursor: pointer; border: none; font-family: inherit; font-size: inherit;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right: 4px;"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                Import
+              </button>
+              <input type="file" id="import-file-input" accept=".json" style="display: none;">
             </div>
           </div>
 

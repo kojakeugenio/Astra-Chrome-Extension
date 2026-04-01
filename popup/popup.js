@@ -38,6 +38,9 @@ const DEFAULT_SETTINGS = {
     GRADIENT_INTENSITY: { amount: 100 },
     PARTICLE_PATTERN: { pattern: 'none' },
     PARTICLE_SPEED: { speed: 1 },
+    KEYWORD_FILTER: { enable: false, terms: [] },
+    CUSTOM_FONT: { enable: false, family: 'default', size: 100 },
+    COMPACT_MODE: { enable: false },
     HOVER_ZOOM: { enable: false, mode: 'popup', excludeUrls: '/messenger_media\n/photo/?fbid\n/stories/', upscaleSmall: true, enablePin: false },
     AUTO_SCROLL: { enable: true, speed: 2 }
   },
@@ -121,7 +124,15 @@ const ui = {
   autoscrollSpeedSlider: null,
   autoscrollSpeedVal: null,
   autoscrollSpeedContainer: null,
-  themeResetFeedWidth: null
+  themeResetFeedWidth: null,
+  keywordFilterTerms: null,
+  keywordFilterContainer: null,
+  fontFamilySelect: null,
+  fontFamilyContainer: null,
+  fontSizeSlider: null,
+  fontSizeVal: null,
+  fontSizeContainer: null,
+  resetFontSize: null
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -187,6 +198,8 @@ function cacheElements() {
   ui.themeArea = document.getElementById('theme-selection-area');
   ui.status = document.getElementById('data-status');
   ui.statAds = document.getElementById('stat-ads');
+  ui.statKeywords = document.getElementById('stat-keywords');
+  ui.keywordStatBadge = document.getElementById('keyword-stat-badge');
   ui.themeBtns = Array.from(document.querySelectorAll('.theme-btn'));
   ui.feedWidthSlider = document.getElementById('feed-width-slider');
   ui.feedWidthVal = document.getElementById('feed-width-val');
@@ -200,6 +213,14 @@ function cacheElements() {
   ui.reelsTimeoutContainer = document.getElementById('reels-timeout-container');
   ui.hoverZoomExcludeUrls = document.getElementById('hover-zoom-exclude-urls');
   ui.hoverZoomExcludeContainer = document.getElementById('hover-zoom-exclude-container');
+  ui.keywordFilterTerms = document.getElementById('keyword-filter-terms');
+  ui.keywordFilterContainer = document.getElementById('keyword-filter-container');
+  ui.fontFamilySelect = document.getElementById('font-family-select');
+  ui.fontFamilyContainer = document.getElementById('font-family-container');
+  ui.fontSizeSlider = document.getElementById('font-size-slider');
+  ui.fontSizeVal = document.getElementById('font-size-val');
+  ui.fontSizeContainer = document.getElementById('font-size-container');
+  ui.resetFontSize = document.getElementById('reset-font-size');
 
   ui.hoverZoomPinToggle = document.getElementById('hover-zoom-pin-toggle');
   ui.hoverZoomPinRow = document.getElementById('hover-zoom-pin-row');
@@ -451,6 +472,40 @@ function bindEvents() {
     await persistSettings('Reels timeout message updated');
   });
 
+  if (ui.keywordFilterTerms) {
+    ui.keywordFilterTerms.addEventListener('change', async () => {
+      ensureFeature('homepage', 'KEYWORD_FILTER', { enable: false, terms: [] });
+      const rawText = ui.keywordFilterTerms.value;
+      settings.homepage.KEYWORD_FILTER.terms = rawText
+        .split(/[\n,]/)
+        .map(t => t.trim())
+        .filter(Boolean);
+      await persistSettings('Keyword filter updated');
+    });
+  }
+
+  ui.fontFamilySelect.addEventListener('change', async () => {
+    ensureFeature('homepage', 'CUSTOM_FONT', { enable: false, family: 'default', size: 100 });
+    settings.homepage.CUSTOM_FONT.family = ui.fontFamilySelect.value;
+    await persistSettings('Font family updated');
+  });
+
+  ui.fontSizeSlider.addEventListener('input', async () => {
+    const val = Number(ui.fontSizeSlider.value);
+    ui.fontSizeVal.textContent = val + '%';
+    ensureFeature('homepage', 'CUSTOM_FONT', { enable: false, family: 'default', size: 100 });
+    settings.homepage.CUSTOM_FONT.size = val;
+    await persistSettings('Font size updated');
+  });
+
+  ui.resetFontSize.addEventListener('click', async () => {
+    ui.fontSizeSlider.value = 100;
+    ui.fontSizeVal.textContent = '100%';
+    ensureFeature('homepage', 'CUSTOM_FONT', { enable: false, family: 'default', size: 100 });
+    settings.homepage.CUSTOM_FONT.size = 100;
+    await persistSettings('Font size reset');
+  });
+
   ui.hoverZoomExcludeUrls.addEventListener('change', async () => {
     ensureFeature('homepage', 'HOVER_ZOOM', { enable: false, excludeUrls: '' });
     settings.homepage.HOVER_ZOOM.excludeUrls = ui.hoverZoomExcludeUrls.value;
@@ -541,6 +596,62 @@ function bindEvents() {
       await persistSettings('Restored to default settings');
     }
   });
+
+  // Export Settings
+  document.getElementById('export-settings').addEventListener('click', async () => {
+    try {
+      const exported = JSON.stringify(settings, null, 2);
+      const blob = new Blob([exported], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().slice(0, 10);
+      a.download = `astra-settings-${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setStatus('Settings exported', 'success');
+    } catch (error) {
+      setStatus('Export failed', 'error');
+    }
+  });
+
+  // Import Settings
+  const importFileInput = document.getElementById('import-file-input');
+  document.getElementById('import-settings').addEventListener('click', () => {
+    importFileInput.click();
+  });
+
+  importFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const imported = JSON.parse(text);
+
+      // Basic validation: must have at least one known category
+      if (!imported.homepage && !imported.unseen && !imported.browser) {
+        throw new Error('Invalid settings file');
+      }
+
+      if (confirm('Import will overwrite your current settings. Continue?')) {
+        settings = deepMergeDefaults(DEFAULT_SETTINGS, imported);
+        renderSettings();
+        await persistSettings('Settings imported successfully');
+      }
+    } catch (error) {
+      if (error.message === 'Invalid settings file') {
+        setStatus('Invalid settings file', 'error');
+      } else {
+        setStatus('Import failed — invalid JSON', 'error');
+      }
+    }
+
+    // Reset the input so the same file can be re-imported
+    importFileInput.value = '';
+  });
 }
 
 async function persistSettings(successMessage) {
@@ -594,6 +705,19 @@ function renderSettings() {
 
   const reelsTimeoutMessage = settings?.homepage?.REELS_TIMEOUT?.message || '';
   ui.reelsTimeoutMessage.value = reelsTimeoutMessage;
+
+  if (ui.keywordFilterTerms) {
+    const keywordTerms = settings?.homepage?.KEYWORD_FILTER?.terms || [];
+    const keywordText = Array.isArray(keywordTerms) ? keywordTerms.join('\n') : String(keywordTerms);
+    ui.keywordFilterTerms.value = keywordText;
+  }
+
+  const fontFamily = settings?.homepage?.CUSTOM_FONT?.family || 'default';
+  ui.fontFamilySelect.value = fontFamily;
+
+  const fontSize = settings?.homepage?.CUSTOM_FONT?.size || 100;
+  ui.fontSizeSlider.value = fontSize;
+  ui.fontSizeVal.textContent = fontSize + '%';
 
   const hoverZoomExcludeUrls = settings?.homepage?.HOVER_ZOOM?.excludeUrls || '';
   ui.hoverZoomExcludeUrls.value = hoverZoomExcludeUrls;
@@ -695,6 +819,19 @@ function renderControlState() {
   if (ui.reelsTimeoutThreshold) ui.reelsTimeoutThreshold.disabled = !reelsTimeoutEnabled;
   if (ui.reelsTimeoutMessage) ui.reelsTimeoutMessage.disabled = !reelsTimeoutEnabled;
 
+  // Keyword filter controls
+  const keywordFilterEnabled = Boolean(settings?.homepage?.KEYWORD_FILTER?.enable);
+  if (ui.keywordFilterContainer) ui.keywordFilterContainer.classList.toggle('disabled', !keywordFilterEnabled);
+  if (ui.keywordFilterTerms) ui.keywordFilterTerms.disabled = !keywordFilterEnabled;
+
+  // Font customization controls
+  const customFontEnabled = Boolean(settings?.homepage?.CUSTOM_FONT?.enable);
+  if (ui.fontFamilyContainer) ui.fontFamilyContainer.classList.toggle('disabled', !customFontEnabled);
+  if (ui.fontFamilySelect) ui.fontFamilySelect.disabled = !customFontEnabled;
+  if (ui.fontSizeContainer) ui.fontSizeContainer.classList.toggle('disabled', !customFontEnabled);
+  if (ui.fontSizeSlider) ui.fontSizeSlider.disabled = !customFontEnabled;
+  if (ui.resetFontSize) ui.resetFontSize.disabled = !customFontEnabled;
+
   // Hover zoom exclude controls
   const hoverZoomEnabled = Boolean(settings?.homepage?.HOVER_ZOOM?.enable);
   if (ui.hoverZoomExcludeContainer) ui.hoverZoomExcludeContainer.classList.toggle('disabled', !hoverZoomEnabled);
@@ -726,6 +863,12 @@ async function refreshAnalytics() {
 function renderAnalytics(stats) {
   const hiddenAds = Math.max(0, Number(stats.hiddenAds) || 0);
   ui.statAds.textContent = String(hiddenAds);
+
+  const hiddenKeywords = Math.max(0, Number(stats.hiddenKeywordPosts) || 0);
+  if (ui.statKeywords) ui.statKeywords.textContent = String(hiddenKeywords);
+  if (ui.keywordStatBadge) {
+    ui.keywordStatBadge.style.display = hiddenKeywords > 0 ? 'flex' : 'none';
+  }
 }
 
 function ensureFeature(category, feature, fallback) {

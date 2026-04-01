@@ -67,7 +67,9 @@ const DEFAULT_SETTINGS = {
     PARTICLE_PATTERN: { pattern: 'none' },
     PARTICLE_SPEED: { speed: 1 },
     KEYWORD_FILTER: { enable: false, terms: [] },
-    HOVER_ZOOM: { enable: false, excludeUrls: '/messenger_media\n/photo/?fbid\n/stories/' },
+    CUSTOM_FONT: { enable: false, family: 'default', size: 100 },
+    COMPACT_MODE: { enable: false },
+    HOVER_ZOOM: { enable: false, mode: 'popup', excludeUrls: '/messenger_media\n/photo/?fbid\n/stories/', upscaleSmall: true, enablePin: false },
     AUTO_SCROLL: { enable: true, speed: 2 }
   },
   browser: {
